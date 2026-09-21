@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>區資護照 - 北區區域原住民族學生資源中心 研習時數查詢系統</title>
+  
+  <style>
+    :root {
+      --primary: #1a73e8;
+      --primary-hover: #1557b0;
+      --success: #1e8e3e;
+      --warning: #f9ab00;
+      --danger: #d93025;
+      --text-main: #202124;
+      --text-sub: #5f6368;
+      --border-color: #dadce0;
+      --bg-card: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body, html {
+      margin: 0; padding: 0; min-height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "PingFang TC", Roboto, sans-serif;
+      background-color: #f4f7fc;
+      color: var(--text-main);
+    }
+
+    body::before {
+      content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-image: url('https://irc.fju.edu.tw/resources/20260615102746493.jpg');
+      background-size: cover; background-position: center;
+      filter: blur(25px) brightness(0.88); transform: scale(1.05); z-index: -2;
+    }
+
+    .main-wrapper {
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+      padding: 35px 15px; min-height: 100vh;
+    }
+
+    .card {
+      background: var(--bg-card); padding: 32px; border-radius: 18px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+      width: 100%; max-width: 960px;
+    }
+
+    /* 頂部標題 */
+    .system-header {
+      text-align: center; margin-bottom: 25px;
+    }
+    .system-title {
+      font-size: 24px; font-weight: bold; color: var(--primary); margin: 0 0 6px 0;
+      letter-spacing: 0.5px;
+    }
+    .system-subtitle {
+      font-size: 14px; color: var(--text-sub); margin: 0;
+    }
+
+    /* 輸入控制元件 */
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      font-size: 14px; font-weight: 600; color: #3c4043; margin-bottom: 6px; display: block;
+    }
+    .form-control {
+      width: 100%; padding: 12px 14px;
+      border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px;
+      outline: none; transition: all 0.2s ease; background: #fff;
+    }
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.18);
+    }
+
+    /* 按鈕樣式 */
+    .btn {
+      padding: 12px 20px; border-radius: 8px; font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s ease; border: none;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-block { width: 100%; }
+    .btn-primary { background-color: var(--primary); color: white; }
+    .btn-primary:hover { background-color: var(--primary-hover); }
+    .btn-success { background-color: var(--success); color: white; }
+    .btn-success:hover { background-color: #137333; }
+    .btn-secondary { background-color: #f1f3f4; color: #3c4043; border: 1px solid var(--border-color); }
+    .btn-secondary:hover { background-color: #e8eaed; }
+    .btn-outline { background-color: transparent; border: 1px solid var(--primary); color: var(--primary); }
+    .btn-outline:hover { background-color: rgba(26,115,232,0.06); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* 個人身分資訊看板 */
+    .profile-bar {
+      background: linear-gradient(135deg, #1a73e8, #1557b0);
+      color: white; padding: 22px 26px; border-radius: 14px; margin-bottom: 24px;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+      box-shadow: 0 4px 15px rgba(26, 115, 232, 0.25);
+    }
+    .profile-info h3 { margin: 0 0 5px 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+    .profile-info p { margin: 0; font-size: 14px; opacity: 0.92; }
+    .hours-pill {
+      background: rgba(255, 255, 255, 0.22); padding: 10px 20px; border-radius: 30px;
+      font-size: 16px; font-weight: 700; backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.3); text-align: right;
+    }
+    .hours-pill span { font-size: 22px; color: #fff; margin-left: 4px; }
+
+    /* 控制列 (年份篩選 + 列印) */
+    .toolbar-bar {
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+      background: #f8f9fa; padding: 14px 18px; border-radius: 12px; margin-bottom: 22px;
+      border: 1px solid var(--border-color);
+    }
+    .filter-item {
+      display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #3c4043;
+    }
+    .filter-item select {
+      padding: 8px 14px; border: 1px solid var(--border-color); border-radius: 6px;
+      font-size: 14px; outline: none; background: #fff; cursor: pointer;
+    }
+
+    /* 單位時數統計小卡片清單 */
+    .stats-container {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #ffffff; border: 1px solid #e8eaed; border-radius: 10px;
+      padding: 14px 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      border-left: 4px solid var(--primary);
+    }
+    .stat-card-title { font-size: 13px; color: var(--text-sub); margin-bottom: 4px; font-weight: 500; }
+    .stat-card-val { font-size: 20px; font-weight: bold; color: var(--primary); }
+
+    /* 表格樣式 */
+    .table-responsive { overflow-x: auto; margin-top: 10px; border-radius: 10px; border: 1px solid #e8eaed; }
+    .table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
+    .table th { background: #f8f9fa; padding: 13px 14px; border-bottom: 2px solid var(--border-color); color: #3c4043; font-weight: 600; white-space: nowrap; }
+    .table td { padding: 13px 14px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    .table tr:last-child td { border-bottom: none; }
+    .table tr:hover { background-color: #fafbfd; }
+
+    /* 徽章 Badge */
+    .badge {
+      padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; display: inline-block;
+    }
+    .badge-approved { background: #e6f4ea; color: #137333; }
+    .badge-pending { background: #fef7e0; color: #b06000; }
+    .badge-rejected { background: #fce8e6; color: #c5221f; }
+
+    /* 通知 Toast */
+    #toastMsg {
+      position: fixed; top: 25px; left: 50%; transform: translateX(-50%);
+      padding: 12px 24px; border-radius: 30px; font-size: 15px; font-weight: bold;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2); z-index: 10000;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s;
+      text-align: center; max-width: 90%;
+    }
+    #toastMsg.show { opacity: 1; transform: translate(-50%, 0); }
+    #toastMsg.success { background: #1e8e3e; color: white; }
+    #toastMsg.error { background: #d93025; color: white; }
+    #toastMsg.info { background: #202124; color: white; }
+
+    /* 友善提示與載入中 */
+    .loading-spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
+      border-top-color: #fff; animation: spin 0.8s linear infinite; margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .help-text { font-size: 12px; color: var(--text-sub); margin-top: 5px; }
+
+    @media (max-width: 600px) {
+      .card { padding: 20px 16px; }
+      .profile-bar { padding: 18px; flex-direction: column; align-items: flex-start; }
+      .hours-pill { width: 100%; text-align: left; }
+      .toolbar-bar { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="toastMsg"></div>
+
+  <div class="main-wrapper">
+    <!-- 登入驗證卡片 -->
+    <div id="loginCard" class="card" style="max-width: 480px; margin-top: 40px;">
+      <div class="system-header">
+        <h1 class="system-title">🎓 區資護照</h1>
+        <p class="system-subtitle">北區區域原住民族學生資源中心 · 研習時數查詢系統</p>
+      </div>
+
+      <div style="background: #e8f0fe; padding: 14px; border-radius: 10px; margin-bottom: 22px; font-size: 13px; color: #174ea6; line-height: 1.6;">
+        💡 <strong>查詢說明：</strong><br>
+        請輸入您的身分證字號及出生年月日進行身分核對，驗證通過後即可即時查詢研習時數與列印研習證明書。
+      </div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label" for="authIdNumber">身分證字號</label>
+          <input type="text" id="authIdNumber" class="form-control" placeholder="請輸入身分證字號 (例如：A123456789)" autocomplete="off" required style="text-transform: uppercase;">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="authBirthDate">出生年月日 (西元)</label>
+          <input type="text" id="authBirthDate" class="form-control" placeholder="西元 8 碼 (例如：19980520)" required>
+          <div class="help-text">支援 8 碼數字（19980520）或日期格式（1998-05-20）</div>
+        </div>
+
+        <button type="submit" id="btnLogin" class="btn btn-primary btn-block" style="margin-top: 10px; padding: 14px;">
+          <span id="loginBtnText">🔍 驗證身分並查詢</span>
+        </button>
+      </form>
+
+      <div style="text-align: center; margin-top: 25px; font-size: 12px; color: #80868b; line-height: 1.6;">
+        教育部青年發展署 / 北區區域原住民族學生資源中心 (輔仁大學)<br>
+        如查詢有疑問或資料需校正，請聯繫中心業務承辦人員。
+      </div>
+    </div>
+
+    <!-- 研習時數主專區卡片 -->
+    <div id="dashboardCard" class="card" style="display: none;">
+      <!-- 個人身分頂部列 -->
+      <div class="profile-bar">
+        <div class="profile-info">
+          <h3 id="dspStudentName">-</h3>
+          <p>身分證號：<span id="dspMaskedId">-</span> ｜ 服務單位：<span id="dspUnit">-</span></p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="hours-pill">
+            累計審核通過時數<br><span id="dspTotalHours">0</span> 小時
+          </div>
+          <button class="btn btn-secondary" onclick="doLogout()" style="background: rgba(255,255,255,0.18); border: none; color: white; padding: 8px 14px; font-size: 13px;">
+            登出
+          </button>
+        </div>
+      </div>
+
+      <!-- 操作工具列 -->
+      <div class="toolbar-bar">
+        <div class="filter-item">
+          <span>📅 研習年份篩選：</span>
+          <select id="filterYear" onchange="handleYearFilterChange()">
+            <option value="">全部年份</option>
+            <option value="2026">2026 年</option>
+            <option value="2025">2025 年</option>
+            <option value="2024">2024 年</option>
+            <option value="2023">2023 年</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="btn btn-outline" onclick="refreshDashboard()" id="btnRefresh">
+            🔄 重新整理
+          </button>
+          <button class="btn btn-success" onclick="printCertificate()">
+            🖨️ 列印 / 匯出時數證明
+          </button>
+        </div>
+      </div>
+
+      <!-- 開課單位時數分組統計卡片 -->
+      <div>
+        <div style="font-size: 15px; font-weight: bold; color: #3c4043; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+          🏛️ 開課單位時數摘要 (<span id="unitStatsYearText">全部年份</span>)
+        </div>
+        <div id="unitStatsContainer" class="stats-container">
+          <!-- 動態注入各單位統計小卡片 -->
+        </div>
+      </div>
+
+      <!-- 研習記錄詳細清單表格 -->
+      <div style="margin-top: 15px;">
+        <div style="font-size: 15px; font-weight: bold; color: #3c4043; margin-bottom: 8px;">
+          📋 研習課程明細清單
+        </div>
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="width: 32%;">課程名稱</th>
+                <th style="width: 22%;">開課單位</th>
+                <th style="width: 22%;">活動時間</th>
+                <th style="width: 10%; text-align: right;">時數</th>
+                <th style="width: 14%; text-align: center;">審核狀態</th>
+              </tr>
+            </thead>
+            <tbody id="recordsTbody">
+              <!-- 動態注入表格內容 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="margin-top: 25px; padding: 14px 18px; background: #fdf6e2; border-left: 4px solid #f9ab00; border-radius: 6px; font-size: 13px; color: #7a4f01; line-height: 1.6;">
+        <strong>📌 注意事項：</strong>
+        本系統僅列出已由管理員審核或認列之研習時數。如需紙本證明文件，請點擊上方「🖨️ 列印 / 匯出時數證明」按鈕進行 A4 列印或另存為 PDF。
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * 後端 GAS API 網址
+     */
+    const API_URL = "https://script.google.com/macros/s/AKfycbw2bmmDg25Qa276KICvl9lB--nkDRPeUb-K7tcJ6aa3Dclr2SiZP-C3ts2JM6-zwT-H/exec";
+
+    let currentUser = null;
+    let currentDashboardData = null;
+
+    // 顯示 Toast 訊息
+    function showToast(text, type = "info") {
+      const toast = document.getElementById('toastMsg');
+      toast.innerText = text;
+      toast.className = `show ${type}`;
+      setTimeout(() => {
+        toast.className = toast.className.replace("show", "").trim();
+      }, 3500);
+    }
+
+    // 遮罩身分證字號 (前 5 碼顯露，其餘星號)
+    function maskIdNumber(idStr) {
+      if (!idStr) return "-";
+      const clean = idStr.toString().trim();
+      if (clean.length >= 5) {
+        return clean.substring(0, 5) + "*****";
+      }
+      return clean;
+    }
+
+    // GAS API 通訊函式
+    async function callGasApi(action, payload = {}) {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: action, ...payload })
+      });
+      return await res.json();
+    }
+
+    // 登入處理
+    async function handleLogin(e) {
+      e.preventDefault();
+      const idNo = document.getElementById('authIdNumber').value.trim().toUpperCase();
+      const bDate = document.getElementById('authBirthDate').value.trim();
+      const btn = document.getElementById('btnLogin');
+      const btnText = document.getElementById('loginBtnText');
+
+      if (!idNo || !bDate) {
+        showToast("⚠️ 請完整輸入身分證字號與出生年月日！", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btnText.innerHTML = `<span class="loading-spinner"></span> 正在核對身分資料...`;
+
+      try {
+        const res = await callGasApi("getDashboard", { idNumber: idNo, birthDate: bDate });
+        btn.disabled = false;
+        btnText.innerHTML = `🔍 驗證身分並查詢`;
+
+        if (res.status !== "success") {
+          showToast(res.message || "❌ 身分證字號或出生年月日核對不符！", "error");
+          return;
+        }
+
+        showToast(`歡迎，${res.user.name}！已成功載入時數。`, "success");
+        currentUser = { ...res.user, birthDate: bDate };
+        currentDashboardData = res;
+
+        document.getElementById('loginCard').style.display = "none";
+        document.getElementById('dashboardCard').style.display = "block";
+
+        renderDashboard();
+      } catch (err) {
+        btn.disabled = false;
+        btnText.innerHTML = `🔍 驗證身分並查詢`;
+        showToast("❌ 系統連線異常，請稍後再試：" + err.toString(), "error");
+      }
+    }
+
+    // 登出
+    function doLogout() {
+      currentUser = null;
+      currentDashboardData = null;
+      document.getElementById('dashboardCard').style.display = "none";
+      document.getElementById('loginCard').style.display = "block";
+      document.getElementById('authIdNumber').value = "";
+      document.getElementById('authBirthDate').value = "";
+      document.getElementById('filterYear').value = "";
+      showToast("已安全登出！", "info");
+    }
+
+    // 重新整理儀表板資料
+    async function refreshDashboard() {
+      if (!currentUser) return;
+      const btn = document.getElementById('btnRefresh');
+      btn.disabled = true;
+      btn.innerText = "更新中...";
+
+      try {
+        const res = await callGasApi("getDashboard", { idNumber: currentUser.idNumber, birthDate: currentUser.birthDate });
+        btn.disabled = false;
+        btn.innerText = "🔄 重新整理";
+
+        if (res.status === "success") {
+          currentDashboardData = res;
+          renderDashboard();
+          showToast("資料已更新完畢！", "success");
+        } else {
+          showToast(res.message, "error");
+        }
+      } catch (e) {
+        btn.disabled = false;
+        btn.innerText = "🔄 重新整理";
+        showToast("更新失敗：" + e.toString(), "error");
+      }
+    }
+
+    // 年份變更處理
+    function handleYearFilterChange() {
+      renderDashboard();
+    }
+
+    // 取得單筆紀錄的開課單位 (支援 courseUnit 或 mainCategory)
+    function getRecordUnit(rec) {
+      return (rec.courseUnit && rec.courseUnit.trim()) || 
+             (rec.mainCategory && rec.mainCategory.trim()) || 
+             (currentUser && currentUser.unit) || 
+             "北區原資中心";
+    }
+
+    // 渲染儀表板與過濾結果
+    function renderDashboard() {
+      if (!currentDashboardData || !currentUser) return;
+
+      const d = currentDashboardData;
+      const selectedYear = document.getElementById('filterYear').value;
+      const allRecords = d.records || [];
+
+      // 個人基本資訊顯示
+      document.getElementById('dspStudentName').innerText = `${currentUser.name} 的區資護照`;
+      document.getElementById('dspMaskedId').innerText = maskIdNumber(currentUser.idNumber);
+      document.getElementById('dspUnit').innerText = currentUser.unit || "未載明";
+
+      // 依年份過濾
+      let filteredRecords = allRecords.filter(rec => {
+        if (!selectedYear) return true;
+        if (!rec.startTime) return false;
+        return rec.startTime.startsWith(selectedYear);
+      });
+
+      // 計算統計時數與開課單位分組
+      let totalApprovedHours = 0;
+      let unitHoursMap = {};
+
+      filteredRecords.forEach(rec => {
+        const isApproved = (rec.status === "通過" || rec.status === "已審核");
+        const hours = parseFloat(rec.hours) || 0;
+        const unitName = getRecordUnit(rec);
+
+        if (isApproved) {
+          totalApprovedHours += hours;
+          unitHoursMap[unitName] = (unitHoursMap[unitName] || 0) + hours;
+        }
+      });
+
+      totalApprovedHours = Math.round(totalApprovedHours * 10) / 10;
+      document.getElementById('dspTotalHours').innerText = totalApprovedHours;
+      document.getElementById('unitStatsYearText').innerText = selectedYear ? `${selectedYear} 年度` : "全部年份";
+
+      // 渲染開課單位時數統計小卡片
+      const statsContainer = document.getElementById('unitStatsContainer');
+      statsContainer.innerHTML = "";
+      const unitKeys = Object.keys(unitHoursMap);
+
+      if (unitKeys.length === 0) {
+        statsContainer.innerHTML = `<div style="grid-column: 1/-1; color: #888; font-size: 13px; padding: 10px 0;">目前無審核通過的研習時數</div>`;
+      } else {
+        unitKeys.forEach(unit => {
+          const hours = Math.round(unitHoursMap[unit] * 10) / 10;
+          const card = document.createElement('div');
+          card.className = "stat-card";
+          card.innerHTML = `
+            <div class="stat-card-title">${unit}</div>
+            <div class="stat-card-val">${hours} <span style="font-size: 13px; font-weight: normal; color: #5f6368;">小時</span></div>
+          `;
+          statsContainer.appendChild(card);
+        });
+      }
+
+      // 渲染明細清單表格
+      const tbody = document.getElementById('recordsTbody');
+      tbody.innerHTML = "";
+
+      if (filteredRecords.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #888; padding: 30px;">⚠️ 在「${selectedYear ? selectedYear + " 年" : "全部年份"}」內尚無任何研習時數紀錄</td></tr>`;
+        return;
+      }
+
+      filteredRecords.forEach(rec => {
+        const tr = document.createElement('tr');
+        const unitName = getRecordUnit(rec);
+        const hours = parseFloat(rec.hours) || 0;
+
+        // 審核狀態徽章
+        let badgeClass = "badge-pending";
+        let statusText = rec.status || "待審核";
+        if (statusText === "通過" || statusText === "已審核") badgeClass = "badge-approved";
+        if (statusText === "不通過") badgeClass = "badge-rejected";
+
+        // 佐證連結
+        let linkHtml = "";
+        if (rec.fileUrl) {
+          const match = rec.fileUrl.match(/https?:\/\/[^\s"'\)]+/i);
+          if (match) {
+            linkHtml = ` <a href="${match[0]}" target="_blank" style="font-size: 12px; color: #1a73e8; text-decoration: none; margin-left: 6px;" title="查看佐證檔案">📷 佐證</a>`;
+          }
+        }
+
+        // 活動時間
+        let timeDisplay = rec.startTime || "-";
+        if (rec.endTime && rec.endTime !== rec.startTime) {
+          timeDisplay += ` ~ <br><span style="color: #70757a; font-size: 12px;">${rec.endTime}</span>`;
+        }
+
+        tr.innerHTML = `
+          <td><strong>${rec.courseName || "研習課程"}</strong>${linkHtml}</td>
+          <td><span style="display: inline-block; background: #eef3fc; color: #185abc; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">${unitName}</span></td>
+          <td style="font-size: 13px; color: #3c4043;">${timeDisplay}</td>
+          <td style="text-align: right; font-weight: bold; color: #1a73e8;">${hours}</td>
+          <td style="text-align: center;"><span class="badge ${badgeClass}">${statusText}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 列印 / 匯出研習證明書 (開新視窗自動呼叫列印)
+    function printCertificate() {
+      if (!currentDashboardData || !currentUser) {
+        showToast("請先完成身分驗證！", "error");
+        return;
+      }
+
+      const selectedYear = document.getElementById('filterYear').value;
+      const maskedId = maskIdNumber(currentUser.idNumber);
+      const today = new Date();
+      const dateStr = `${today.getFullYear()}/${today.getMonth() + 1}/${today.getDate()}`;
+
+      const certTitle = selectedYear 
+        ? `${selectedYear} 年度北區區域原住民族學生資源中心 研習時數證明書`
+        : `北區區域原住民族學生資源中心 研習時數證明書`;
+
+      // 依開課單位分組 (僅計入審核通過者)
+      let unitGrouped = {};
+      let totalHours = 0;
+
+      const records = currentDashboardData.records || [];
+      records.forEach(rec => {
+        const isApproved = (rec.status === "通過" || rec.status === "已審核");
+        if (!isApproved) return;
+
+        if (selectedYear && (!rec.startTime || !rec.startTime.startsWith(selectedYear))) {
+          return;
+        }
+
+        const unitName = getRecordUnit(rec);
+        const hours = parseFloat(rec.hours) || 0;
+
+        if (!unitGrouped[unitName]) {
+          unitGrouped[unitName] = { courses: [], subTotal: 0 };
+        }
+        unitGrouped[unitName].courses.push({
+          name: rec.courseName || "研習課程",
+          hours: hours
+        });
+        unitGrouped[unitName].subTotal += hours;
+        totalHours += hours;
+      });
+
+      totalHours = Math.round(totalHours * 10) / 10;
+      for (const u in unitGrouped) {
+        unitGrouped[u].subTotal = Math.round(unitGrouped[u].subTotal * 10) / 10;
+      }
+
+      const unitList = Object.keys(unitGrouped);
+      let tableRowsHtml = "";
+
+      if (unitList.length === 0) {
+        tableRowsHtml = `<tr><td colspan="3" style="text-align: center; color: #777; padding: 25px;">該期間內無審核通過之研習時數紀錄</td></tr>`;
+      } else {
+        unitList.forEach(unit => {
+          // 單位標題分組列
+          tableRowsHtml += `
+            <tr style="background-color: #555555 !important; color: #ffffff !important; font-weight: bold;">
+              <td colspan="2" style="border: 1px solid #444; padding: 9px 12px; color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">${unit}</td>
+              <td style="border: 1px solid #444; padding: 9px 12px; text-align: right; color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">小計：${unitGrouped[unit].subTotal} 小時</td>
+            </tr>
+          `;
+
+          // 該單位底下課程明細
+          unitGrouped[unit].courses.forEach((item, idx) => {
+            tableRowsHtml += `
+              <tr>
+                <td style="border: 1px solid #dadce0; padding: 8px 12px; width: 20%; color: #555;">${unit}</td>
+                <td style="border: 1px solid #dadce0; padding: 8px 12px; width: 65%;">${idx + 1}. ${item.name}</td>
+                <td style="border: 1px solid #dadce0; padding: 8px 12px; width: 15%; text-align: right;">${item.hours}</td>
+              </tr>
+            `;
+          });
+        });
+      }
+
+      const printHtml = `
+        <!DOCTYPE html>
+        <html lang="zh-TW">
+        <head>
+          <meta charset="UTF-8">
+          <title>${certTitle}_${currentUser.name}</title>
+          <style>
+            body { font-family: "Microsoft JhengHei", Arial, sans-serif; color: #202124; padding: 0; margin: 0; background: #fff; }
+            .print-container { width: 100%; max-width: 195mm; margin: 0 auto; padding: 12mm 10mm; box-sizing: border-box; }
+            .header { border-bottom: 3px solid #1a73e8; padding-bottom: 12px; margin-bottom: 18px; text-align: center; }
+            .header h1 { margin: 0 0 6px 0; color: #1a73e8; font-size: 23px; letter-spacing: 1.5px; }
+            .header p { margin: 0; color: #5f6368; font-size: 13px; }
+            .info-table { width: 100%; margin-bottom: 18px; font-size: 14px; line-height: 1.8; }
+            .info-table td { padding: 3px 0; }
+            .main-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; border: 1px solid #7f8c8d; }
+            .main-table th { background-color: #f1f3f4 !important; color: #202124; font-weight: bold; padding: 9px 12px; border: 1px solid #7f8c8d; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .main-table td { word-wrap: break-word; }
+            .total-row { font-size: 15px; font-weight: bold; color: #1a73e8; background-color: #e8f0fe !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .footer-notes { margin-top: 30px; font-size: 12px; color: #70757a; line-height: 1.6; border-top: 1px dashed #dadce0; padding-top: 10px; }
+            @page { size: A4; margin: 12mm 10mm; }
+            @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+          </style>
+        </head>
+        <body>
+          <div class="print-container">
+            <div class="header">
+              <h1>${certTitle}</h1>
+              <p>教育部青年發展署 / 北區區域原住民族學生資源中心 (輔仁大學)</p>
+            </div>
+
+            <table class="info-table">
+              <tr>
+                <td style="width: 50%;"><strong>學員姓名：</strong>${currentUser.name}</td>
+                <td style="width: 50%;"><strong>身分證字號：</strong>${maskedId}</td>
+              </tr>
+              <tr>
+                <td><strong>服務單位：</strong>${currentUser.unit || "未載明"}</td>
+                <td><strong>證明產出日期：</strong>${dateStr}</td>
+              </tr>
+            </table>
+
+            <table class="main-table">
+              <thead>
+                <tr>
+                  <th style="width: 25%; text-align: left;">開課單位</th>
+                  <th style="width: 60%; text-align: left;">研習課程名稱</th>
+                  <th style="width: 15%; text-align: right;">時數</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRowsHtml}
+                <tr class="total-row">
+                  <td colspan="2" style="border: 1px solid #1a73e8; padding: 11px 12px; text-align: right; padding-right: 15px;">累計總研習時數：</td>
+                  <td style="border: 1px solid #1a73e8; padding: 11px 12px; text-align: right;">${totalHours} 小時</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="footer-notes">
+              1. 本證明書由「北區區域原住民族學生資源中心 區資護照系統」線上核發。<br>
+              2. 研習時數之計算與認列以本中心資料庫審查通過之數據為準。
+            </div>
+          </div>
+          <script>
+            window.onload = function() { setTimeout(() => { window.print(); }, 300); };
+          <\/script>
+        </body>
+        </html>
+      `;
+
+      const printWin = window.open('', '_blank');
+      printWin.document.open();
+      printWin.document.write(printHtml);
+      printWin.document.close();
+    }
+  </script>
+</body>
+</html>
